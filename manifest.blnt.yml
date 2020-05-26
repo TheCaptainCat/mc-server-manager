@@ -1,0 +1,4 @@
+name: Minecraft Server Manager
+desc: Host your own Minecraft server and manage it easily
+module: server_mgr
+version: 0.0.1
