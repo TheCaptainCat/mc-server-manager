@@ -5,6 +5,7 @@ import os
 from typing import Optional, List
 
 import requests
+import websockets
 
 import server_rnr
 
@@ -66,6 +67,7 @@ class MCRunner:
                         server_file.write(chunk)
                         await asyncio.sleep(0)
                         await self._notify_connections(f'UPDATING:{done}:{total_length}')
+            await self._notify_connections(f'INSTALLED:{version}')
 
     def run(self):
         if self._status != RunnerStatus.STANDING_BY:
@@ -87,7 +89,7 @@ class MCRunner:
         for task in iter(self._process.stdout.readline, ''):
             line = await task
             if len(line) > 0:
-                await self._notify_connections(f'STDOUT:{line.rstrip().decode("utf-8")}')
+                await self._notify_connections(f'LOG:{line.rstrip().decode("utf-8")}')
             else:
                 break
         self._process = None
@@ -118,3 +120,8 @@ class MCRunner:
             if v['id'] == version:
                 return v['url']
         return None
+
+    def start_main_loop(self):
+        start_server = websockets.serve(self.get_ws_handler(), '127.0.0.1', 4242)
+        asyncio.get_event_loop().run_until_complete(start_server)
+        asyncio.get_event_loop().run_forever()

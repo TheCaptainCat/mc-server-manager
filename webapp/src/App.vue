@@ -25,7 +25,7 @@
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
-import { uiStateModule, userModule } from "@/store";
+import { gameModule, socketModule, uiStateModule, userModule } from "@/store";
 import { Drawer, NavBar } from "@/components/navigation";
 import { Toasts } from "@/components/toasts";
 import LoginForm from "@/components/LoginForm.vue";
@@ -42,6 +42,34 @@ export default class App extends Vue {
   public async created() {
     uiStateModule.initTheme();
     await userModule.info();
+    await socketModule.subscribe<{ content: string }>({
+      topic: "game",
+      channel: "log",
+      callback: async res => {
+        gameModule.addLogEntry(res.message.content);
+      }
+    });
+    await socketModule.subscribe<{ done: number; total: number }>({
+      topic: "game",
+      channel: "update",
+      callback: async res => {
+        gameModule.setProgress(res.message);
+      }
+    });
+    await socketModule.subscribe<{ status: string }>({
+      topic: "game",
+      channel: "status",
+      callback: async res => {
+        gameModule.setStatus(res.message.status);
+      }
+    });
+    await socketModule.subscribe<{ installed: string }>({
+      topic: "game",
+      channel: "version",
+      callback: async res => {
+        gameModule.setCurrentVersion(res.message.installed);
+      }
+    });
   }
 
   public get isFetchingUserInfo() {

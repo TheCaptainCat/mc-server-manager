@@ -1,15 +1,19 @@
-import asyncio
 import json
 from datetime import datetime
 
 import requests
-from bolinette import data
+from bolinette import blnt
 from bolinette.decorators import service
-from bolinette.utils import fs
+
+from server_mgr import GameState
 
 
 @service('version')
-class VersionService(data.Service):
+class VersionService(blnt.Service):
+    @property
+    def game_state(self) -> GameState:
+        return self.context['mc']
+
     async def refresh_cache(self):
         cached = dict(map(lambda v: (v.name, v), await self.get_all()))
         fetched = json.loads(
@@ -21,7 +25,8 @@ class VersionService(data.Service):
                     'name': version['id'],
                     'v_type': version['type'],
                     'url': version['url'],
-                    'date': datetime.fromisoformat(version['releaseTime'])
+                    'date': datetime.fromisoformat(version['releaseTime']),
+                    'installed': False
                 })
         return await self.get_all()
 
@@ -31,7 +36,16 @@ class VersionService(data.Service):
     async def get_latest(self):
         await self.refresh_cache()
         version_table = self.context.table('version')
-        return self.repo.query.order_by(data.functions.desc(version_table.date)).first()
+        return self.repo.query.order_by(blnt.functions.desc(version_table.date)).first()
+
+    async def get_installed(self):
+        return await self.get_first_by('installed', True, safe=True)
+
+    async def set_installed(self, version):
+        installed = await self.get_installed()
+        if installed is not None:
+            installed.installed = False
+        version.installed = True
 
     async def download_server(self, version):
-        pass
+        await self.game_state.push_message(f'UPDATE:{version.name}')

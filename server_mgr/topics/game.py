@@ -1,7 +1,7 @@
-from bolinette import data
+from bolinette import blnt
 from bolinette.decorators import topic
 
 
 @topic('game')
-class GameTopic(data.Topic):
+class GameTopic(blnt.Topic):
     pass

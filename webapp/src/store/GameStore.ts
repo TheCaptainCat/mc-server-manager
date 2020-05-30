@@ -2,13 +2,12 @@ import { Module, Mutation, VuexModule } from "vuex-module-decorators";
 
 @Module({ name: "game" })
 export default class GameStore extends VuexModule {
-  private _running: boolean = false;
+  private _status: string = "STANDING_BY";
   private _version: string | null = null;
   private _latest: string | null = null;
-
-  public get running(): boolean {
-    return this._running;
-  }
+  private _log: string[] = [];
+  private _done: number = 0;
+  private _total: number = 0;
 
   public get version(): string | null {
     return this._version;
@@ -18,9 +17,19 @@ export default class GameStore extends VuexModule {
     return this._latest;
   }
 
-  @Mutation
-  public setRunningState(value: boolean) {
-    this._running = value;
+  public get log(): string[] {
+    return this._log;
+  }
+
+  public get status(): string {
+    return this._status;
+  }
+
+  public get progress(): { done: number, total: number } {
+    return {
+      done: this._done,
+      total: this._total
+    }
   }
 
   @Mutation
@@ -31,5 +40,21 @@ export default class GameStore extends VuexModule {
   @Mutation
   public setLatestVersion(value: string | null) {
     this._latest = value;
+  }
+
+  @Mutation
+  public setStatus(value: string) {
+    this._status = value;
+  }
+
+  @Mutation
+  public addLogEntry(line: string) {
+    this._log = this._log.concat(line);
+  }
+
+  @Mutation
+  public setProgress(progress: { done: number; total: number }) {
+    this._done = progress.done;
+    this._total = progress.total;
   }
 }

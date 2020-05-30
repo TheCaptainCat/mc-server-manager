@@ -5,13 +5,14 @@ import router from "./router";
 import store from "./store";
 import vuetify from "./plugins/vuetify";
 
-import { BackButton, ExternalLink, Modal } from "@/components/global";
+import { BackButton, ExternalLink, Modal, SlimCard } from "@/components/global";
 
 Vue.config.productionTip = false;
 
 Vue.component("back-btn", BackButton);
 Vue.component("external-link", ExternalLink);
 Vue.component("modal", Modal);
+Vue.component("slim-card", SlimCard);
 
 new Vue({
   router,

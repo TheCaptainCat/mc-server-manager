@@ -1,12 +1,16 @@
 import Env from "@/utils/Env";
 
+interface ISocketSubscription {
+
+}
+
 export default class SocketConnection {
   private readonly _url: string;
   private readonly _retryTimeout: number;
   private _connection: WebSocket | null;
   private readonly _subscriptions: Record<
     string,
-    Record<string, (response: SocketResponse) => Promise<void>>
+    Record<string, (response: SocketResponse<any>) => Promise<void>>
   >;
   private _open: boolean = false;
   private _messageQueue: SocketMessage[];
@@ -39,7 +43,7 @@ export default class SocketConnection {
     this._connection.onerror = retry;
     this._connection.onclose = retry;
     this._connection.onmessage = ev => {
-      const response = JSON.parse(ev.data) as SocketResponse;
+      const response = JSON.parse(ev.data) as SocketResponse<any>;
       if (
         response.topic in this._subscriptions &&
         response.channel in this._subscriptions[response.topic]
@@ -49,10 +53,10 @@ export default class SocketConnection {
     };
   }
 
-  public async subscribe(
+  public async subscribe<T>(
     topic: string,
     channel: string,
-    callback: (response: SocketResponse) => Promise<void>
+    callback: (response: SocketResponse<T>) => Promise<void>
   ) {
     if (!(topic in this._subscriptions)) {
       this._subscriptions[topic] = {};
@@ -106,8 +110,8 @@ export interface SocketMessage {
   message?: object;
 }
 
-export interface SocketResponse {
+export interface SocketResponse<T> {
   topic: string;
   channel: string;
-  message: any;
+  message: T;
 }

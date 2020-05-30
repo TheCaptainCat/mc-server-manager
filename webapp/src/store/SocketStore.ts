@@ -24,12 +24,12 @@ export default class SocketStore extends VuexModule {
   }
 
   @Action
-  public async subscribe(options: {
+  public async subscribe<T>(options: {
     topic: string;
     channel: string;
-    callback: (response: SocketResponse) => Promise<void>;
+    callback: (response: SocketResponse<T>) => Promise<void>;
   }) {
-    await socketModule.connection.subscribe(
+    await socketModule.connection.subscribe<T>(
       options.topic,
       options.channel,
       options.callback

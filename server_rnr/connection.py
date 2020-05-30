@@ -32,7 +32,7 @@ class WSConnection:
                 self.runner.write(':'.join(args))
 
     def _consumer(self):
-        async def consumer_handler(websocket, _):
+        async def consumer_handler(websocket):
             try:
                 async for message in websocket:
                     await self._in_queue.put(message)
@@ -41,7 +41,7 @@ class WSConnection:
         return consumer_handler
 
     def _producer(self):
-        async def producer_handler(websocket, _):
+        async def producer_handler(websocket):
             while True:
                 message = await self._out_queue.get()
                 await websocket.send(message)
@@ -49,12 +49,13 @@ class WSConnection:
 
     @staticmethod
     def ws_handler(runner: MCRunner):
-        async def handler(websocket, path):
+        async def handler(websocket, _):
             ws = WSConnection(runner)
+            print('new connection')
             runner.register_connection(ws)
             msg_task = asyncio.create_task(ws._wait_for_messages())
-            consumer_task = asyncio.create_task(ws._consumer()(websocket, path))
-            producer_task = asyncio.create_task(ws._producer()(websocket, path))
+            consumer_task = asyncio.create_task(ws._consumer()(websocket))
+            producer_task = asyncio.create_task(ws._producer()(websocket))
             try:
                 done, pending = await asyncio.wait(
                     [consumer_task, producer_task, msg_task],
@@ -65,4 +66,5 @@ class WSConnection:
                     task.result()
             finally:
                 runner.unregister_connection(ws)
+                print('closed connection')
         return handler
