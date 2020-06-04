@@ -25,11 +25,11 @@ export default class GameStore extends VuexModule {
     return this._status;
   }
 
-  public get progress(): { done: number, total: number } {
+  public get progress(): { done: number; total: number } {
     return {
       done: this._done,
       total: this._total
-    }
+    };
   }
 
   @Mutation

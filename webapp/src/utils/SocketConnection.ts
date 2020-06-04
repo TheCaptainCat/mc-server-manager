@@ -1,16 +1,18 @@
 import Env from "@/utils/Env";
 
-interface ISocketSubscription {
-
+interface SocketSubscription {
+  attempt: number;
+  callback: (response: SocketResponse<any>) => Promise<void>;
 }
 
 export default class SocketConnection {
   private readonly _url: string;
+  private _attempt: number;
   private readonly _retryTimeout: number;
   private _connection: WebSocket | null;
   private readonly _subscriptions: Record<
     string,
-    Record<string, (response: SocketResponse<any>) => Promise<void>>
+    Record<string, SocketSubscription>
   >;
   private _open: boolean = false;
   private _messageQueue: SocketMessage[];
@@ -18,6 +20,7 @@ export default class SocketConnection {
   public constructor(url?: string, retryTimeout?: number) {
     if (url) this._url = `${Env.WS_URL}${url}`;
     else this._url = Env.WS_URL as string;
+    this._attempt = 0;
     this._retryTimeout = retryTimeout || 5000;
     this._subscriptions = {};
     this._messageQueue = [];
@@ -25,6 +28,7 @@ export default class SocketConnection {
   }
 
   public async resetConnection() {
+    this._attempt += 1;
     this.close();
     this._connection = new WebSocket(this._url);
     this._connection.onopen = async () => {
@@ -48,7 +52,9 @@ export default class SocketConnection {
         response.topic in this._subscriptions &&
         response.channel in this._subscriptions[response.topic]
       ) {
-        this._subscriptions[response.topic][response.channel](response);
+        this._subscriptions[response.topic][response.channel].callback(
+          response
+        );
       }
     };
   }
@@ -62,18 +68,21 @@ export default class SocketConnection {
       this._subscriptions[topic] = {};
     }
     await this.send({ action: "subscribe", topic: topic, channel: channel });
-    this._subscriptions[topic][channel] = callback;
+    this._subscriptions[topic][channel] = { attempt: this._attempt, callback };
   }
 
   public async renewSubscriptions() {
     if (this._connection && this._open) {
       for (const [topic, channels] of Object.entries(this._subscriptions)) {
         for (const channel of Object.keys(channels)) {
-          await this.send({
-            action: "subscribe",
-            topic: topic,
-            channel: channel
-          });
+          if (channels[channel].attempt !== this._attempt) {
+            channels[channel].attempt = this._attempt;
+            await this.send({
+              action: "subscribe",
+              topic: topic,
+              channel: channel
+            });
+          }
         }
       }
     }

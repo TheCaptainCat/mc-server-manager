@@ -33,7 +33,12 @@
           {{ currentVersion }}
         </div>
         <div>
-          <game-settings :current-version="currentVersion" :status="status" />
+          <game-settings
+            :current-version="currentVersion"
+            :status="status"
+            :properties="properties"
+            @save-props="saveProps"
+          />
         </div>
       </div>
     </div>
@@ -53,6 +58,7 @@ import ApiRequest from "@/utils/ApiRequest";
 export default class GameStatus extends Vue {
   public loading: boolean = true;
   public players: Player[] = [];
+  public properties: Property[] = [];
 
   public get currentVersion() {
     return gameModule.version;
@@ -75,8 +81,9 @@ export default class GameStatus extends Vue {
   public async mounted() {
     const versionTask = this.loadVersion();
     const playerTask = this.loadPlayers();
+    const propTask = this.loadProps();
 
-    await Promise.all([versionTask, playerTask]);
+    await Promise.all([versionTask, playerTask, propTask]);
     this.loading = false;
   }
 
@@ -97,12 +104,30 @@ export default class GameStatus extends Vue {
     });
   }
 
+  public async loadProps() {
+    await new ApiRequest("/prop", "GET").fetch<Property[]>({
+      success: async res => {
+        this.properties = res.data || [];
+      }
+    });
+  }
+
   public async startGame() {
     await new ApiRequest(`/game/run`, "POST").fetch({});
   }
 
   public async stopGame() {
     await new ApiRequest(`/game/stop`, "POST").fetch({});
+  }
+
+  public async saveProps() {
+    await new ApiRequest<Property[]>("/prop", "PUT", this.properties).fetch<
+      Property[]
+    >({
+      success: async res => {
+        this.properties = res.data;
+      }
+    });
   }
 }
 
@@ -115,6 +140,11 @@ export interface Player {
   name: string;
   uid: string;
   balance: number;
+}
+
+export interface Property {
+  name: string;
+  value: string;
 }
 </script>
 

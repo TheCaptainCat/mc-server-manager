@@ -1,15 +1,18 @@
 import asyncio
+from typing import Optional
+
 import websockets
 
 from bolinette import core
+from mcrcon import MCRcon
 
 
 class GameState:
     def __init__(self, context: core.BolinetteContext):
         self._status = None
         self.context = context
-        self._in_queue = asyncio.Queue()
-        self._out_queue = asyncio.Queue()
+        self._ws_out_queue = asyncio.Queue()
+        self._rcon_connection: Optional[MCRcon] = None
 
     @property
     def status(self):
@@ -19,6 +22,8 @@ class GameState:
         action, args = message.split(':', 1)
         if action == 'STATUS':
             self._status = args
+            if self._status == 'STANDING_BY':
+                self._rcon_connection = None
             await self.context.sockets.send_message('game', 'status', {
                 'status': args
             })
@@ -48,12 +53,12 @@ class GameState:
     def _producer(self):
         async def producer_handler(websocket: websockets.WebSocketClientProtocol):
             while True:
-                message: str = await self._out_queue.get()
+                message: str = await self._ws_out_queue.get()
                 await websocket.send(message)
         return producer_handler
 
     async def push_message(self, message):
-        await self._out_queue.put(message)
+        await self._ws_out_queue.put(message)
 
     async def query_status(self):
         await self.push_message('STATUS')
@@ -63,6 +68,15 @@ class GameState:
 
     async def stop_game(self):
         await self.push_message('COMMAND:stop')
+
+    async def _connect_rcon(self, password: str, port: int):
+        self._rcon_connection = MCRcon('localhost', password, port)
+        self._rcon_connection.connect()
+
+    async def push_rcon_command(self, password: str, port: int, command: str):
+        if self._rcon_connection is None:
+            await self._connect_rcon(password, port)
+        return self._rcon_connection.command(command)
 
     async def open_connection(self):
         async with websockets.connect('ws://localhost:4242/') as websocket:
@@ -77,4 +91,4 @@ class GameState:
                 for task in done:
                     task.result()
             finally:
-                pass
+                self._rcon_connection = None
