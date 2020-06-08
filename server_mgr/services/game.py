@@ -1,18 +1,17 @@
 from bolinette import blnt
 from bolinette.decorators import service
 
-from server_mgr import GameState
-from server_mgr.services import PropertyService
+from server_mgr import services, game
 
 
 @service('game')
 class GameService(blnt.SimpleService):
     @property
-    def game_state(self) -> GameState:
+    def game_state(self) -> 'game.GameState':
         return self.context['mc']
 
     @property
-    def prop_service(self) -> PropertyService:
+    def prop_service(self) -> 'services.PropertyService':
         return self.context.service('prop')
 
     async def send_command(self, command: str):

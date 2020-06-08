@@ -6,17 +6,23 @@ import websockets
 from bolinette import core
 from mcrcon import MCRcon
 
+from server_mgr.game import MCBank
+
 
 class GameState:
     def __init__(self, context: core.BolinetteContext):
         self._status = None
         self.context = context
+        self._bank = MCBank(context)
         self._ws_out_queue = asyncio.Queue()
         self._rcon_connection: Optional[MCRcon] = None
 
     @property
     def status(self):
         return self._status
+
+    async def _process_log(self, line):
+        await self._bank.process(line)
 
     async def _process_message(self, message: str):
         action, args = message.split(':', 1)
@@ -40,6 +46,7 @@ class GameState:
                 'total': int(total)
             })
         elif action == 'LOG':
+            await self._process_log(args)
             await self.context.sockets.send_message('game', 'log', {
                 'content': args
             })

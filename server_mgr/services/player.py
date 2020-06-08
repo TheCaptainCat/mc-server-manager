@@ -13,6 +13,9 @@ class PlayerService(blnt.Service):
         values['uid'] = self.fetch_uid(values['name'])
         return await super().create(values, **_)
 
+    async def get_by_name(self, name: str, *, safe=False):
+        return await self.get_first_by('name', name, safe=safe)
+
     def fetch_uid(self, username):
         url = f'https://api.mojang.com/users/profiles/minecraft/{username}'
         resp = requests.get(url).content

@@ -26,7 +26,7 @@ export default class GameCommand extends Vue {
       command: this.command
     }).fetch<{ result: string }>({
       success: async res => {
-        console.log(res.data);
+        this.command = "";
       }
     });
   }

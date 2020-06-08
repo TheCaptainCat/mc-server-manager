@@ -3,7 +3,7 @@ import asyncio
 from bolinette import core
 from bolinette.decorators import init_func
 
-from server_mgr import GameState
+from server_mgr.game import GameState
 
 
 @init_func

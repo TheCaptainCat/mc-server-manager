@@ -5,13 +5,13 @@ import requests
 from bolinette import blnt
 from bolinette.decorators import service
 
-from server_mgr import GameState
+from server_mgr import game
 
 
 @service('version')
 class VersionService(blnt.Service):
     @property
-    def game_state(self) -> GameState:
+    def game_state(self) -> 'game.GameState':
         return self.context['mc']
 
     async def refresh_cache(self):
