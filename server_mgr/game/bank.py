@@ -54,7 +54,7 @@ class MCBank:
                                                             f'xp set {player.name} {xp - amount} levels')
                 elif args[0] == 'get' and len(args) == 2:
                     if args[1] == 'all':
-                        amount = xp
+                        amount = player.balance
                     else:
                         amount = min(player.balance, int(args[1]))
                     player.balance -= amount
