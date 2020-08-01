@@ -131,7 +131,6 @@ export default class ApiRequest<T> {
 
   private doToastErrors(errors: Array<string | Error>) {
     for (const error of errors) {
-      if (error instanceof Error) console.error(error);
       if (typeof error === "string")
         toastModule.addToast({ message: error, type: "error" });
     }

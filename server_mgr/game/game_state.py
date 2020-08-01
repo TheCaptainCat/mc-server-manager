@@ -86,7 +86,8 @@ class GameState:
         return self._rcon_connection.command(command)
 
     async def open_connection(self):
-        async with websockets.connect('ws://localhost:4242/') as websocket:
+        runner_url = self.context.env['RUNNER_URL']
+        async with websockets.connect(runner_url) as websocket:
             consumer_task = asyncio.create_task(self._consumer()(websocket))
             producer_task = asyncio.create_task(self._producer()(websocket))
             try:

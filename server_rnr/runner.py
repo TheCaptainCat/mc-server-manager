@@ -122,6 +122,6 @@ class MCRunner:
         return None
 
     def start_main_loop(self):
-        start_server = websockets.serve(self.get_ws_handler(), '127.0.0.1', 4242)
+        start_server = websockets.serve(self.get_ws_handler(), '0.0.0.0', 4242)
         asyncio.get_event_loop().run_until_complete(start_server)
         asyncio.get_event_loop().run_forever()

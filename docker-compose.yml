@@ -1,0 +1,33 @@
+version: "3"
+services:
+  api:
+    build:
+      context: .
+      dockerfile: ./docker/api/Dockerfile
+    environment:
+      - BLNT_RUNNER_URL=ws://172.28.0.3:4242
+    volumes:
+      - ./minecraft:/api/minecraft
+      - ./instance:/api/instance
+    ports:
+      - "5000:5000"
+    networks:
+      minecraft:
+        ipv4_address: 172.28.0.2
+  game:
+    build:
+      context: .
+      dockerfile: ./docker/game/Dockerfile
+    volumes:
+      - ./minecraft:/game/minecraft
+      - ./instance:/game/instance
+    networks:
+      minecraft:
+        ipv4_address: 172.28.0.3
+networks:
+  minecraft:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.28.0.0/16"
